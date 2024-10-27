@@ -1,10 +1,6 @@
 import { Command, Option, register } from 'discord-hono';
 
-const commands = [new Command('hello', 'response world'), new Command('help', 'response help').options(new Option('text', 'with text'))];
+const commands = [new Command('mailcheck', 'メールの文章をAIができる限り確認します。').options(new Option('メール本文', '本文を入力します。'))];
 
-register(
-	commands,
-	process.env.DISCORD_APPLICATION_ID,
-	process.env.DISCORD_TOKEN,
-	process.env.DISCORD_TEST_GUILD_ID
-);
+//@ts-ignore
+register(commands, process.env.DISCORD_APPLICATION_ID, process.env.DISCORD_TOKEN);
