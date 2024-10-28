@@ -1,5 +1,4 @@
 import { DiscordHono, CommandContext, Embed } from 'discord-hono';
-
 // DiscordHonoアプリの初期化
 const app = new DiscordHono();
 
@@ -21,6 +20,95 @@ interface PostResult {
 		rule: string;
 	}>;
 }
+app.command('mailself', async (c: CommandContext) =>
+	c.resDefer(async (c) => {
+		try {
+			// メール本文が未定義の場合のエラーメッセージ
+			if (!c.var.メール本文) {
+				return c.res({
+					embeds: [
+						new Embed()
+							.title('エラー')
+							.description(`メール本文が指定されていません。`)
+							.timestamp(new Date().toISOString())
+							.color(0xff0000)
+							.footer({ text: 'メールチェッカー' }),
+					],
+				});
+			}
+
+			// チェック結果を取得
+			const { modifiedText, details } = await post(c.var.メール本文);
+			//@ts-ignore
+			const res = await get(c.var.メール本文);
+			//@ts-ignore
+			const { status, alerts } = res;
+			// Embedの作成
+			if (details.length == 0 && status == 0) {
+				const embed = new Embed()
+					.title('メールをチェックしました。')
+					.description(`AIは修正すべき部分を指摘しませんでした。`)
+					.timestamp(new Date().toISOString())
+					.color(0x00ff00)
+					.footer({ text: 'メールチェッカー' });
+				const warnembed = new Embed()
+					.title('AIは完璧ではありません。')
+					.description(`必ず人間のチェックを受けてください。`)
+					.timestamp(new Date().toISOString())
+					.color(0xffff00)
+					.footer({ text: 'メールチェッカー' });
+				// Embedを返す
+				//@ts-ignore
+				return await c.followup({ embeds: [embed, warnembed] });
+			} else {
+				let returnValue = [];
+				const embed = new Embed()
+					.title('メールをチェックしました。')
+					.description(`AIができる限り修正したテキスト: ${modifiedText}`)
+					.timestamp(new Date().toISOString())
+					.color(0xffff00)
+					.footer({ text: 'メールチェッカー' });
+				returnValue.push(embed);
+				details.forEach((d, i) => {
+					let detailembed = new Embed()
+						.title('Yahoo! AIがミスだと思ったところ' + (i + 1))
+						.description(`単語: ${d.word}\n ルール: ${d.rule}\n 修正提案: ${d.suggestion || 'なし'}\n メモ: ${d.note || 'なし'}`);
+					returnValue.push(detailembed);
+				});
+				//@ts-ignore
+				alerts.forEach((a, i) => {
+					let Recruitembed = new Embed()
+						.title('Recruit AIがミスだと思ったところ' + (i + 1))
+						.description(
+							`位置 (最初からの文字数): ${a.pos}\n単語: ${a.word}\n修正提案: ${a.suggestions.join(', ')}\n信頼度: ${(a.score * 100).toFixed(
+								2
+							)}%`
+						);
+					returnValue.push(Recruitembed);
+				});
+				const warnembed = new Embed()
+					.title('AIは完璧ではありません。')
+					.description(`必ず人間のチェックを受けてください。`)
+					.timestamp(new Date().toISOString())
+					.color(0xffff00)
+					.footer({ text: 'メールチェッカー' });
+				// Embedを返す
+				returnValue.push(warnembed);
+
+				// detailsが存在する場合、詳細情報をフィールドに追加
+				//@ts-ignore
+				console.log(returnValue);
+				// Embedを返す
+				//@ts-ignore
+				return await c.followup({ embeds: returnValue });
+			}
+		} catch (error) {
+			console.error(error);
+			// エラーハンドリング
+			return await c.followup('エラーが発生しました。<@888011401040371712>内容:' + error);
+		}
+	})
+);
 
 app.command('mailcheck', async (c: CommandContext) =>
 	c.resDefer(async (c) => {
@@ -41,52 +129,77 @@ app.command('mailcheck', async (c: CommandContext) =>
 
 			// チェック結果を取得
 			const { modifiedText, details } = await post(c.var.メール本文);
-			console.log(modifiedText, details, details.length);
-
+			//@ts-ignore
+			const res = await get(c.var.メール本文);
+			//@ts-ignore
+			const { status, alerts } = res;
 			// Embedの作成
-			if (details.length == 0) {
+			if (details.length == 0 && status == 0) {
 				const embed = new Embed()
 					.title('メールをチェックしました。')
-					.description(`AIは修正すべき部分を指摘しませんでした。`)
+					.description(`AIはあなたの文章に指摘をしませんでした。`)
 					.timestamp(new Date().toISOString())
 					.color(0x00ff00)
 					.footer({ text: 'メールチェッカー' });
-				const warnembed = new Embed()
-					.title('AIは完璧ではありません。')
-					.description(`必ず人間のチェックを受けてください。`)
+				const askembed = new Embed()
+					.title(`メールチェックをしてください。`)
+					.description(`<@&1300012682962796597>`)
 					.timestamp(new Date().toISOString())
-					.color(0xffff00)
+					.color(0x00ff00)
+					.footer({ text: 'メールチェッカー' });
+
+				const bodyEmbed = new Embed()
+					.title(`本文`)
+					.description(c.var.メール本文)
+					.timestamp(new Date().toISOString())
+					.color(0x00ff00)
 					.footer({ text: 'メールチェッカー' });
 				// Embedを返す
 				//@ts-ignore
-				return await c.followup({ embeds: [embed, warnembed] });
+				return await c.followup({ embeds: [embed, askembed, bodyEmbed] });
 			} else {
 				let returnValue = [];
 				const embed = new Embed()
 					.title('メールをチェックしました。')
-					.description(`修正されたテキスト: ${modifiedText}`)
+					.description(`AIができる限り修正したテキスト:\n ${modifiedText}`)
 					.timestamp(new Date().toISOString())
 					.color(0xffff00)
 					.footer({ text: 'メールチェッカー' });
 				returnValue.push(embed);
 				details.forEach((d, i) => {
 					let detailembed = new Embed()
-						.title('AIがミスだと思ったところ' + (i + 1))
+						.title('Yahoo! AIがミスだと思ったところ' + (i + 1))
 						.description(`単語: ${d.word}\n ルール: ${d.rule}\n 修正提案: ${d.suggestion || 'なし'}\n メモ: ${d.note || 'なし'}`);
 					returnValue.push(detailembed);
 				});
-				const warnembed = new Embed()
-					.title('AIは完璧ではありません。')
-					.description(`必ず人間のチェックを受けてください。`)
+				//@ts-ignore
+				alerts.forEach((a, i) => {
+					let Recruitembed = new Embed()
+						.title('Recruit AIがミスだと思ったところ' + (i + 1))
+						.description(
+							`位置 (最初からの文字数): ${a.pos}\n単語: ${a.word}\n修正提案: ${a.suggestions.join(', ')}\n信頼度: ${(a.score * 100).toFixed(
+								2
+							)}%`
+						);
+					returnValue.push(Recruitembed);
+				});
+				const askembed = new Embed()
+					.title(`メールチェックをしてください。`)
+					.description(`<@&1300012682962796597>`)
 					.timestamp(new Date().toISOString())
-					.color(0xffff00)
+					.color(0x00ff00)
 					.footer({ text: 'メールチェッカー' });
-				// Embedを返す
-				returnValue.push(warnembed);
-
+				returnValue.push(askembed);
+				const bodyEmbed = new Embed()
+					.title(`本文`)
+					.description(c.var.メール本文)
+					.timestamp(new Date().toISOString())
+					.color(0x00ff00)
+					.footer({ text: 'メールチェッカー' });
+				returnValue.push(bodyEmbed);
 				// detailsが存在する場合、詳細情報をフィールドに追加
 				//@ts-ignore
-				console.log(embed);
+				console.log(returnValue);
 				// Embedを返す
 				//@ts-ignore
 				return await c.followup({ embeds: returnValue });
@@ -94,7 +207,7 @@ app.command('mailcheck', async (c: CommandContext) =>
 		} catch (error) {
 			console.error(error);
 			// エラーハンドリング
-			return await c.followup('エラーが発生しました。内容:' + error);
+			return await c.followup('エラーが発生しました。<@888011401040371712>内容:' + error);
 		}
 	})
 );
@@ -153,4 +266,16 @@ function formatResult(result: any, originalText: string): PostResult {
 	}, originalText);
 
 	return { modifiedText, details };
+}
+
+async function get(emailBody: string): Promise<PostResult> {
+	const body = emailBody;
+	const apiKey = 'ZZPuxCVRtwO1ssGR4Q9diPZxteWU09Cr';
+	const recruiturl = `https://api.a3rt.recruit.co.jp/proofreading/v2/typo?apikey=${apiKey}&sentence=${body}`;
+	const response = await fetch(recruiturl, {
+		method: 'GET',
+	});
+	const result = await response.json();
+	//@ts-ignore
+	return result;
 }

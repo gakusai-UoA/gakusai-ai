@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "discord-hono": "^0.8.5",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "hono": "^4.6.7"
   }
 }
