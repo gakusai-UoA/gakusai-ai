@@ -20,6 +20,7 @@ interface PostResult {
 		rule: string;
 	}>;
 }
+
 app.command('mailself', async (c: CommandContext) =>
 	c.resDefer(async (c) => {
 		try {
@@ -39,7 +40,6 @@ app.command('mailself', async (c: CommandContext) =>
 
 			// チェック結果を取得
 			const { modifiedText, details } = await post(c.var.メール本文);
-			//@ts-ignore
 			const res = await get(c.var.メール本文);
 			//@ts-ignore
 			const { status, alerts } = res;
@@ -81,8 +81,8 @@ app.command('mailself', async (c: CommandContext) =>
 						.title('Recruit AIがミスだと思ったところ' + (i + 1))
 						.description(
 							`位置 (最初からの文字数): ${a.pos}\n単語: ${a.word}\n修正提案: ${a.suggestions.join(', ')}\n信頼度: ${(a.score * 100).toFixed(
-								2
-							)}%`
+								2,
+							)}%`,
 						);
 					returnValue.push(Recruitembed);
 				});
@@ -107,7 +107,7 @@ app.command('mailself', async (c: CommandContext) =>
 			// エラーハンドリング
 			return await c.followup('エラーが発生しました。<@888011401040371712>内容:' + error);
 		}
-	})
+	}),
 );
 
 app.command('mailcheck', async (c: CommandContext) =>
@@ -178,8 +178,8 @@ app.command('mailcheck', async (c: CommandContext) =>
 						.title('Recruit AIがミスだと思ったところ' + (i + 1))
 						.description(
 							`位置 (最初からの文字数): ${a.pos}\n単語: ${a.word}\n修正提案: ${a.suggestions.join(', ')}\n信頼度: ${(a.score * 100).toFixed(
-								2
-							)}%`
+								2,
+							)}%`,
 						);
 					returnValue.push(Recruitembed);
 				});
@@ -209,7 +209,7 @@ app.command('mailcheck', async (c: CommandContext) =>
 			// エラーハンドリング
 			return await c.followup('エラーが発生しました。<@888011401040371712>内容:' + error);
 		}
-	})
+	}),
 );
 
 app.component('delete-self', (c) => c.resDeferUpdate(c.followupDelete));
