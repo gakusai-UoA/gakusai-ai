@@ -2,7 +2,27 @@
 name = "gakusai-ai"
 main = "src/index.ts"
 compatibility_date = "2024-10-22"
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
 compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "gakusai_user_kv"
+id = "e8654a6eb4b849b394de826c950f3e07"
+
+
+[[kv_namespaces]]
+binding = "gakusai_name_kv"
+id = "3af42fba725b4eb991c9bd717b5f6ecc"
+
+[[kv_namespaces]]
+binding = "gakusai_reminder_kv"
+id = "364be31331d64ec5b2715a80bc91f893"
+
+
 
 # Workers Logs
 # Docs: https://developers.cloudflare.com/workers/observability/logs/workers-logs/
